@@ -6,7 +6,7 @@ import { useGame } from '@/context/GameContext';
 import { useToast } from '@/hooks/use-toast';
 import Chat from '@/components/Chat'; // Мы создадим этот компонент
 
-const API_URL = "http://localhost:3001";
+const API_URL = "https://gamenot.onrender.com";
 
 const GamePlanPage = () => {
   const { gamePlan, gameHistory, addMessageToHistory, isLoading, setLoading, setError, userName } = useGame();

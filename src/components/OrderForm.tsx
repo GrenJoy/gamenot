@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGame } from "@/context/GameContext";
 
 // В будущем вы замените это на URL вашего развернутого бэкенда на Render
-const API_URL = "http://localhost:3001"; 
+const API_URL = "https://gamenot.onrender.com"; 
 
 const OrderForm = () => {
   const [name, setName] = useState("");

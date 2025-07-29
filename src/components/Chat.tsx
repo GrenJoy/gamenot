@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useGame, IMessage } from '@/context/GameContext';
 import { X } from 'lucide-react';
 
-const API_URL = "http://localhost:3001";
+const API_URL = "https://gamenot.onrender.com";
 
 interface ChatProps {
   person: 'bogdan' | 'olya' | 'felix';
