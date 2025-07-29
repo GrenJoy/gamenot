@@ -15,6 +15,8 @@ interface ChatProps {
 
 const Chat = ({ person, closeChat }: ChatProps) => {
   const { 
+    // Полный доступ к контексту
+    userName, gamePlan, gameHistory,
     bogdanChat, olyaChat, felixChat, 
     addMessageToBogdanChat, addMessageToOlyaChat, addMessageToFelixChat,
     setError 
@@ -33,7 +35,6 @@ const Chat = ({ person, closeChat }: ChatProps) => {
   const { history, addMessage, title } = chats[person];
 
   useEffect(() => {
-    // Auto-scroll to bottom
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
@@ -43,6 +44,31 @@ const Chat = ({ person, closeChat }: ChatProps) => {
     if (!input.trim()) return;
 
     const userMessage: IMessage = { role: 'user', content: input };
+    let historyForApi: IMessage[] = [...history, userMessage];
+
+    // --- НОВАЯ ЛОГИКА: ВНЕДРЕНИЕ КОНТЕКСТА ---
+    // Если это самое первое сообщение в данном чате
+    if (history.length === 0) {
+      const lastUpdate = gameHistory[gameHistory.length - 1]?.content;
+      
+      const projectBrief = {
+        role: 'system',
+        content: `(Справка по проекту: Клиент '${userName}' заказал игру '${gamePlan?.title}'. Будь в курсе этого.)`
+      };
+      
+      const latestNews = {
+        role: 'system',
+        content: `(Последний публичный отчет от Богдана: ${JSON.stringify(lastUpdate)})`
+      };
+
+      // Вставляем контекст в начало истории, которую отправим в API
+      historyForApi = [projectBrief, latestNews, userMessage];
+      
+      // Также сохраняем этот контекст в глобальное состояние, чтобы он не терялся
+      addMessage(projectBrief);
+      addMessage(latestNews);
+    }
+    
     addMessage(userMessage);
     setInput('');
     setChatLoading(true);
@@ -52,7 +78,7 @@ const Chat = ({ person, closeChat }: ChatProps) => {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ person, history: [...history, userMessage] })
+        body: JSON.stringify({ person, history: historyForApi })
       });
 
       if (!response.ok) throw new Error('Собеседник не в настроении... Попробуйте позже.');
@@ -80,13 +106,18 @@ const Chat = ({ person, closeChat }: ChatProps) => {
         <CardContent className="flex-grow overflow-hidden">
           <ScrollArea className="h-full" ref={scrollAreaRef}>
             <div className="space-y-4 pr-4">
-              {history.map((msg, index) => (
-                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3 rounded-lg max-w-xs md:max-w-md ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
-                    {msg.content}
+              {history.map((msg, index) => {
+                // Не отображаем системные сообщения пользователю
+                if (msg.role === 'system') return null;
+                
+                return (
+                  <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`p-3 rounded-lg max-w-xs md:max-w-md ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}>
+                      {msg.content}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
                {isChatLoading && (
                 <div className="flex justify-start">
                     <div className="p-3 rounded-lg bg-secondary">
@@ -115,5 +146,3 @@ const Chat = ({ person, closeChat }: ChatProps) => {
     </div>
   );
 };
-
-export default Chat;
