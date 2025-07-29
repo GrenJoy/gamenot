@@ -1,52 +1,50 @@
-import { GameCard, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const AboutSection = () => {
   const achievements = [
     {
       title: "Инновационные технологии",
-      description: "Используем передовые движки и собственные разработки для создания уникального геймплея",
+      description: "Используем самые обсуждаемые технологии, чтобы ваши деньги были вложены в 'будущее'.",
       icon: "🚀"
     },
     {
       title: "Индивидуальный подход",
-      description: "Каждый проект - это уникальное произведение искусства, созданное специально для вас",
+      description: "Каждый проект для нас — это новый способ рассказать, почему нам нужно еще немного времени и средств.",
       icon: "🎨"
     },
     {
-      title: "Быстрая разработка",
-      description: "Благодаря нашему опыту мы можем создать игру вашей мечты в кратчайшие сроки",
+      title: "Гибкие сроки",
+      description: "Мы не верим в дедлайны. Настоящее искусство требует времени. И денег. В основном денег.",
       icon: "⚡"
     }
   ];
 
   return (
-    <section id="about" className="py-20 px-4 bg-secondary/10">
+    <section id="about" className="py-20 px-4 bg-secondary/30">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-hero bg-clip-text text-transparent">
-            О студии GameNot
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+            О Студии GameNot
           </h2>
           <p className="text-xl text-foreground/80 max-w-3xl mx-auto mb-8">
-            Мы - ведущая игровая студия из Днепро, которая революционизирует индустрию разработки игр. 
-            Наша миссия - создавать игры, которые меняют жизни и приносят невероятную прибыль.
+            Мы - легендарная игровая студия из города Днепр. Наша миссия - брать деньги на создание игр. Просто брать деньги.
           </p>
           <div className="text-lg text-foreground/70 max-w-4xl mx-auto">
-            За годы нашей работы мы накопили огромный опыт в создании самых разнообразных игровых проектов. 
-            От мобильных казуальных игр до масштабных AAA-проектов - мы знаем, как сделать вашу игру успешной.
+            За годы нашей работы мы накопили огромный опыт в получении финансирования. Мы знаем, как сделать вашу идею... источником нашего дохода.
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {achievements.map((item, index) => (
-            <GameCard key={index} className="text-center hover:border-neon-green/50 transition-all duration-300">
+            <Card key={index} className="text-center hover:border-primary/50 transition-all duration-300 bg-background/50">
               <CardHeader>
                 <div className="text-4xl mb-4">{item.icon}</div>
-                <CardTitle className="text-xl mb-4 text-neon-green">{item.title}</CardTitle>
+                <CardTitle className="text-xl mb-4 text-primary">{item.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-foreground/70">{item.description}</p>
               </CardContent>
-            </GameCard>
+            </Card>
           ))}
         </div>
       </div>

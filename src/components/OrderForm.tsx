@@ -4,19 +4,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { NeonCard, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useGame } from "@/context/GameContext";
+
+// В будущем вы замените это на URL вашего развернутого бэкенда на Render
+const API_URL = "http://localhost:3001"; 
 
 const OrderForm = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    genre: "",
-    description: ""
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [name, setName] = useState("");
+  const [genre, setGenre] = useState("");
+  const [description, setDescription] = useState("");
+
+  const { setGamePlan, setLoading, setError, setUserName, setGameDescription, addMessageToHistory, isLoading } = useGame();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const genres = [
     "RPG", "Шутер", "Стратегия", "Платформер", "Головоломка", 
@@ -26,7 +27,7 @@ const OrderForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.genre || !formData.description) {
+    if (!name || !genre || !description) {
       toast({
         title: "Ошибка",
         description: "Пожалуйста, заполните все поля",
@@ -35,120 +36,111 @@ const OrderForm = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    
+    setLoading(true);
+    setError(null);
+
     try {
-      // Генерируем обманчивый ответ от Deepseek
-      const response = await generateGamePlan(formData);
+      const response = await fetch(`${API_URL}/api/generate-plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, genre, description })
+      });
+
+      if (!response.ok) {
+        throw new Error('Не удалось получить ответ от нашего гениального гендиректора.');
+      }
+
+      const plan = await response.json();
       
-      // Сохраняем данные в localStorage для следующих страниц
-      localStorage.setItem('gameProject', JSON.stringify({
-        ...formData,
-        aiResponse: response,
-        payments: [],
-        totalPaid: 0
-      }));
-      
-      // Переходим на страницу результата
-      navigate('/game-plan');
-    } catch (error) {
+      // Сохраняем все в нашем глобальном состоянии
+      setUserName(name);
+      setGameDescription(`Жанр: ${genre}. Описание: ${description}`);
+      setGamePlan(plan);
+      // Добавляем ответ Богдана в общую историю
+      addMessageToHistory({ role: 'assistant', content: `**План Разработки от Богдана:**\n\n**${plan.title}**\n\n**План:** ${plan.game_plan}\n\n**Финансы:** ${plan.financial_outlook}\n\n**Команда:** ${plan.team_update}` });
+
+    } catch (error: any) {
+      const errorMessage = error.message || "Что-то пошло не так. Возможно, наши сервера сейчас отдыхают.";
+      setError(errorMessage);
       toast({
-        title: "Ошибка",
-        description: "Не удалось обработать заявку. Попробуйте снова.",
+        title: "Произошла ошибка",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
-  };
-
-  const generateGamePlan = async (data: typeof formData) => {
-    // Симулируем API вызов к Deepseek
-    // В реальной версии здесь будет запрос к Deepseek API
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return {
-      title: `${data.genre} игра "${data.name} Project"`,
-      message: `Дорогой ${data.name}! Спасибо что выбрали нашу компанию GameNot! Ваша ${data.genre.toLowerCase()} игра будет иметь безусловный геймплей и денежный успех! 
-      
-      Я, Богдан, гендиректор компании, лично контролирую процесс разработки. Наш ведущий разработчик Феликс уже начал работу над архитектурой, а художница Оля создает концепт-арты. 
-      
-      По нашим расчетам, ваша игра принесет минимум 500% прибыли в первый год! Мы составили детальный план - игра будет готова всего за 1 месяц!`,
-      timeline: "1 месяц до релиза",
-      expectedProfit: "500%+ прибыли",
-      nextStep: "Для начала разработки необходим стартовый взнос в размере $10,000"
-    };
   };
 
   return (
     <section id="order-form" className="py-20 px-4">
       <div className="container mx-auto max-w-4xl">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-hero bg-clip-text text-transparent">
-            Создайте игру своей мечты
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+            Создайте Игру Вашей Мечты
           </h2>
           <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
-            Расскажите нам о своей идее, и мы превратим её в невероятную игру
+            Доверьтесь профессионалам из GameNot. Мы знаем, как делать хиты.
           </p>
         </div>
 
-        <NeonCard className="max-w-2xl mx-auto">
+        <Card className="max-w-2xl mx-auto bg-secondary/30 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-center text-2xl text-neon-purple">
-              Заявка на разработку игры
+            <CardTitle className="text-center text-2xl text-primary">
+              Заявка на разработку
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="name" className="text-foreground">Ваше имя</Label>
+                <Label htmlFor="name">Ваше имя</Label>
                 <Input
                   id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="Как к вам обращаться?"
-                  className="mt-2 bg-secondary/50 border-primary/20 focus:border-neon-purple"
+                  className="mt-2 bg-background/50 border-primary/20 focus:border-primary"
                 />
               </div>
 
               <div>
-                <Label htmlFor="genre" className="text-foreground">Игру в каком жанре вы хотите заказать у нашей славной компании?</Label>
-                <Select value={formData.genre} onValueChange={(value) => setFormData({...formData, genre: value})}>
-                  <SelectTrigger className="mt-2 bg-secondary/50 border-primary/20 focus:border-neon-purple">
-                    <SelectValue placeholder="Выберите жанр вашей будущей игры" />
+                <Label htmlFor="genre">Жанр будущей игры</Label>
+                <Select value={genre} onValueChange={setGenre}>
+                  <SelectTrigger className="mt-2 bg-background/50 border-primary/20 focus:border-primary">
+                    <SelectValue placeholder="Выберите жанр" />
                   </SelectTrigger>
                   <SelectContent>
-                    {genres.map((genre) => (
-                      <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                    {genres.map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="description" className="text-foreground">Расскажите немного об игре</Label>
+                <Label htmlFor="description">Расскажите немного об игре</Label>
                 <Textarea
                   id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Опишите вашу идею: сюжет, механики, особенности..."
                   rows={4}
-                  className="mt-2 bg-secondary/50 border-primary/20 focus:border-neon-purple resize-none"
+                  className="mt-2 bg-background/50 border-primary/20 focus:border-primary resize-none"
                 />
               </div>
 
               <Button 
                 type="submit" 
-                variant="cyber" 
+                variant="default" 
                 size="lg" 
                 className="w-full"
-                disabled={isSubmitting}
+                disabled={isLoading}
               >
-                {isSubmitting ? "Анализируем вашу идею..." : "Получить план разработки"}
+                {isLoading ? "Анализируем вашу гениальную идею..." : "Получить план разработки"}
               </Button>
             </form>
           </CardContent>
-        </NeonCard>
+        </Card>
       </div>
     </section>
   );
