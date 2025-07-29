@@ -9,7 +9,7 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_KEY = 'sk-3b8dc8294df44924a41f6cce406991c2'; // ВНИМАНИЕ: Ключ в коде для отладки. ОБЯЗАТЕЛЬНО УДАЛИТЬ!
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
 const httpClient = axios.create({
