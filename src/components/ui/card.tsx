@@ -76,4 +76,35 @@ const CardFooter = React.forwardRef<
 ))
 CardFooter.displayName = "CardFooter"
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+// Gaming card variants
+const GameCard = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border border-primary/20 bg-gradient-card text-card-foreground shadow-card hover:border-neon-purple/50 transition-all duration-300",
+      className
+    )}
+    {...props}
+  />
+))
+GameCard.displayName = "GameCard"
+
+const NeonCard = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border border-neon-purple bg-gradient-card text-card-foreground shadow-neon backdrop-blur-sm",
+      className
+    )}
+    {...props}
+  />
+))
+NeonCard.displayName = "NeonCard"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, GameCard, NeonCard }

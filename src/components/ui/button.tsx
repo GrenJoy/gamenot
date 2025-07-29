@@ -18,12 +18,16 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        cyber: "bg-gradient-hero text-foreground font-semibold shadow-glow hover:shadow-neon transition-all duration-300 border border-primary/20",
+        neon: "bg-transparent border border-neon-purple text-neon-purple hover:bg-neon-purple hover:text-background shadow-glow transition-all duration-300",
+        game: "bg-gradient-card border border-accent text-foreground hover:border-neon-green hover:text-neon-green transition-all duration-300"
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        hero: "h-14 px-12 py-4 text-lg"
       },
     },
     defaultVariants: {

@@ -61,7 +61,28 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Gaming color system
+				neon: {
+					purple: 'hsl(var(--neon-purple))',
+					green: 'hsl(var(--neon-green))',
+					blue: 'hsl(var(--neon-blue))',
+					orange: 'hsl(var(--cyber-orange))'
 				}
+			},
+			backgroundImage: {
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-glow': 'var(--gradient-glow)'
+			},
+			boxShadow: {
+				'neon': 'var(--shadow-neon)',
+				'glow': 'var(--shadow-glow)',
+				'card': 'var(--shadow-card)'
+			},
+			transitionProperty: {
+				'smooth': 'var(--transition-smooth)',
+				'glow': 'var(--transition-glow)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
