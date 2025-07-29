@@ -9,7 +9,27 @@ import { Separator } from '@/components/ui/separator';
 
 const API_URL = "https://gamenot.onrender.com";
 
-// Новый "умный" компонент для отображения одного поста в ленте
+// Рекурсивный компонент для отображения вложенных данных
+const RenderValue = ({ data }: { data: any }) => {
+  // Если это не объект, просто отображаем как строку
+  if (typeof data !== 'object' || data === null) {
+    return <p className="text-foreground/80 whitespace-pre-wrap">{String(data)}</p>;
+  }
+
+  // Если это объект, рекурсивно отображаем его содержимое
+  return (
+    <div className="pl-4 border-l-2 border-primary/20 space-y-2 mt-2">
+      {Object.entries(data).map(([key, value]) => (
+        <div key={key}>
+          <h4 className="font-semibold capitalize">{key.replace(/_/g, ' ')}:</h4>
+          <RenderValue data={value} />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Основная карточка, использующая рекурсивный компонент
 const ProjectUpdateCard = ({ update, title }: { update: any, title: string }) => (
   <Card className="bg-secondary/30">
     <CardHeader>
@@ -19,18 +39,7 @@ const ProjectUpdateCard = ({ update, title }: { update: any, title: string }) =>
       {Object.entries(update).map(([key, value]) => (
         <div key={key}>
           <h3 className="font-bold capitalize text-lg">{key.replace(/_/g, ' ')}:</h3>
-          {typeof value === 'string' ? (
-            <p className="text-foreground/80 whitespace-pre-wrap">{value}</p>
-          ) : (
-            <div className="pl-4 border-l-2 border-primary/20 space-y-2 mt-2">
-              {Object.entries(value as object).map(([subKey, subValue]) => (
-                <div key={subKey}>
-                  <h4 className="font-semibold capitalize">{subKey.replace(/_/g, ' ')}</h4>
-                  <p className="text-foreground/70 whitespace-pre-wrap">{String(subValue)}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <RenderValue data={value} />
         </div>
       ))}
     </CardContent>
