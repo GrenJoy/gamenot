@@ -50,30 +50,39 @@ app.post('/api/generate-plan', async (req, res) => {
         const response = await httpClient.post(DEEPSEEK_API_URL, {
             model: 'deepseek-chat',
             messages: [
-                {
-                    "role": "system",
-                    "content": personalities.system_initial
-                },
-                {
-                    "role": "user",
-                    "content": userPrompt
-                }
+                { "role": "system", "content": personalities.system_initial },
+                { "role": "user", "content": userPrompt }
             ],
-            temperature: 1.1, // Higher temperature for more "creative" lies
+            temperature: 1.1,
             max_tokens: 1000
         });
 
         const content = response.data.choices[0].message.content;
         
-        // Clean the content to make sure it's valid JSON
-        const jsonString = content.replace(/```json\n|```/g, '').trim();
-        
-        const parsedContent = JSON.parse(jsonString);
-        res.json(parsedContent);
+        // --- NEW, more robust JSON parsing ---
+        try {
+            const jsonString = content.replace(/```json\n|```/g, '').trim();
+            const parsedContent = JSON.parse(jsonString);
+            res.json(parsedContent);
+        } catch (parseError) {
+            // If parsing fails, we log the exact response from the AI
+            console.error('--- FAILED TO PARSE AI RESPONSE AS JSON ---');
+            console.error('AI Response was:', content);
+            console.error('Parse Error:', parseError);
+            // And send a specific error to the frontend
+            res.status(500).json({ error: 'AI returned an invalid format. Check Render logs for details.' });
+        }
 
     } catch (error) {
-        console.error('Error calling DeepSeek API:', error.response ? error.response.data : error.message);
-        res.status(500).json({ error: 'Failed to generate game plan from AI.' });
+        // This will catch errors with the API call itself (e.g., invalid key)
+        console.error('--- ERROR CALLING DEEPSEEK API ---');
+        if (error.response) {
+            console.error('Status:', error.response.status);
+            console.error('Data:', error.response.data);
+        } else {
+            console.error('Error Message:', error.message);
+        }
+        res.status(500).json({ error: 'Failed to call AI service. Check Render logs for details.' });
     }
 });
 
