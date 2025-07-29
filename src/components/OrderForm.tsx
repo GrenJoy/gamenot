@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NeonCard, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const OrderForm = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ const OrderForm = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const genres = [
     "RPG", "Шутер", "Стратегия", "Платформер", "Головоломка", 
@@ -35,17 +37,47 @@ const OrderForm = () => {
 
     setIsSubmitting(true);
     
-    // Симуляция отправки формы
-    setTimeout(() => {
-      toast({
-        title: "Заявка отправлена!",
-        description: "Наш менеджер свяжется с вами в ближайшее время",
-      });
+    try {
+      // Генерируем обманчивый ответ от Deepseek
+      const response = await generateGamePlan(formData);
       
-      // Здесь будет логика для отправки в DeepSeek API
-      console.log("Form data:", formData);
+      // Сохраняем данные в localStorage для следующих страниц
+      localStorage.setItem('gameProject', JSON.stringify({
+        ...formData,
+        aiResponse: response,
+        payments: [],
+        totalPaid: 0
+      }));
+      
+      // Переходим на страницу результата
+      navigate('/game-plan');
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обработать заявку. Попробуйте снова.",
+        variant: "destructive"
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 2000);
+    }
+  };
+
+  const generateGamePlan = async (data: typeof formData) => {
+    // Симулируем API вызов к Deepseek
+    // В реальной версии здесь будет запрос к Deepseek API
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return {
+      title: `${data.genre} игра "${data.name} Project"`,
+      message: `Дорогой ${data.name}! Спасибо что выбрали нашу компанию GameNot! Ваша ${data.genre.toLowerCase()} игра будет иметь безусловный геймплей и денежный успех! 
+      
+      Я, Богдан, гендиректор компании, лично контролирую процесс разработки. Наш ведущий разработчик Феликс уже начал работу над архитектурой, а художница Оля создает концепт-арты. 
+      
+      По нашим расчетам, ваша игра принесет минимум 500% прибыли в первый год! Мы составили детальный план - игра будет готова всего за 1 месяц!`,
+      timeline: "1 месяц до релиза",
+      expectedProfit: "500%+ прибыли",
+      nextStep: "Для начала разработки необходим стартовый взнос в размере $10,000"
+    };
   };
 
   return (
@@ -80,7 +112,7 @@ const OrderForm = () => {
               </div>
 
               <div>
-                <Label htmlFor="genre" className="text-foreground">Жанр игры</Label>
+                <Label htmlFor="genre" className="text-foreground">Игру в каком жанре вы хотите заказать у нашей славной компании?</Label>
                 <Select value={formData.genre} onValueChange={(value) => setFormData({...formData, genre: value})}>
                   <SelectTrigger className="mt-2 bg-secondary/50 border-primary/20 focus:border-neon-purple">
                     <SelectValue placeholder="Выберите жанр вашей будущей игры" />
@@ -94,7 +126,7 @@ const OrderForm = () => {
               </div>
 
               <div>
-                <Label htmlFor="description" className="text-foreground">Расскажите об игре</Label>
+                <Label htmlFor="description" className="text-foreground">Расскажите немного об игре</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -112,7 +144,7 @@ const OrderForm = () => {
                 className="w-full"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Отправляется..." : "Получить план разработки"}
+                {isSubmitting ? "Анализируем вашу идею..." : "Получить план разработки"}
               </Button>
             </form>
           </CardContent>
