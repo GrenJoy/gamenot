@@ -56,8 +56,8 @@ const OrderForm = () => {
       setUserName(name);
       setGameDescription(`Жанр: ${genre}. Описание: ${description}`);
       setGamePlan(plan);
-      // Добавляем ответ Богдана в общую историю
-      addMessageToHistory({ role: 'assistant', content: `**План Разработки от Богдана:**\n\n**${plan.title}**\n\n**План:** ${plan.game_plan}\n\n**Финансы:** ${plan.financial_outlook}\n\n**Команда:** ${plan.team_update}` });
+      // Добавляем ответ Богдана в общую историю как чистый объект
+      addMessageToHistory({ role: 'assistant', content: plan });
 
     } catch (error: any) {
       const errorMessage = error.message || "Что-то пошло не так. Возможно, наши сервера сейчас отдыхают.";

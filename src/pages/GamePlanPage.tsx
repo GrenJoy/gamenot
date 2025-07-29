@@ -1,12 +1,30 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useGame } from '@/context/GameContext';
 import { useToast } from '@/hooks/use-toast';
-import Chat from '@/components/Chat'; // Мы создадим этот компонент
+import Chat from '@/components/Chat';
+import { Separator } from '@/components/ui/separator';
 
 const API_URL = "https://gamenot.onrender.com";
+
+// Новый компонент для отображения одного поста в ленте
+const ProjectUpdateCard = ({ update, title }: { update: any, title: string }) => (
+  <Card className="bg-secondary/30">
+    <CardHeader>
+      <CardTitle className="text-primary">{title}</CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {Object.entries(update).map(([key, value]) => (
+        <div key={key}>
+          <h3 className="font-bold capitalize text-lg">{key.replace(/_/g, ' ')}:</h3>
+          <p className="text-foreground/80">{String(value)}</p>
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
 
 const GamePlanPage = () => {
   const { gamePlan, gameHistory, addMessageToHistory, isLoading, setLoading, setError, userName } = useGame();
@@ -23,7 +41,7 @@ const GamePlanPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const fullHistory = gameHistory.map(m => `${m.role}: ${m.content}`).join('\n');
+      const fullHistory = gameHistory.map(m => JSON.stringify(m.content)).join('\n');
       const response = await fetch(`${API_URL}/api/send-money`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,10 +49,10 @@ const GamePlanPage = () => {
       });
       if (!response.ok) throw new Error('Не удалось отправить деньги. Возможно, наш счет переполнен.');
       
-      const { reply } = await response.json();
-      addMessageToHistory({ role: 'assistant', content: `**Отчет после взноса $${amount}:**\n\n${reply}` });
+      const update = await response.json();
+      addMessageToHistory({ role: 'assistant', content: update });
       setAmount('');
-      toast({ title: "Успех!", description: "Ваш взнос получен! Разработка ускорилась!" });
+      toast({ title: "Успех!", description: "Ваш взнос получен! Читайте новый отчет в ленте." });
     } catch (error: any) {
       setError(error.message);
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
@@ -52,78 +70,65 @@ const GamePlanPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
-      <div className="container mx-auto max-w-4xl">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
-            Ваш Проект с GameNot
-          </h1>
-          <p className="text-xl mt-4">Добро пожаловать в будущее, {userName}!</p>
-        </header>
-
-        <Card className="mb-8 bg-secondary/30">
-          <CardHeader>
-            <CardTitle className="text-primary">{gamePlan.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-bold">План Разработки:</h3>
-              <p>{gamePlan.game_plan}</p>
-            </div>
-            <div>
-              <h3 className="font-bold">Финансовые Перспективы:</h3>
-              <p>{gamePlan.financial_outlook}</p>
-            </div>
-            <div>
-              <h3 className="font-bold">Отчет от Команды:</h3>
-              <p>{gamePlan.team_update}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8 bg-secondary/30">
-          <CardHeader>
-            <CardTitle>История Проекта</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 max-h-96 overflow-y-auto">
-            {gameHistory.map((msg, index) => (
-              <div key={index} className="p-3 rounded-md bg-background/50 whitespace-pre-wrap">
-                {msg.content}
-              </div>
+      <div className="container mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        {/* Левая колонка - Лента новостей */}
+        <div className="md:col-span-2 space-y-6">
+          <header className="text-center md:text-left">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+              {gamePlan.title}
+            </h1>
+            <p className="text-xl mt-2">Дневник разработки для, {userName}</p>
+          </header>
+          <Separator />
+          <div className="space-y-8">
+            {gameHistory.map((item, index) => (
+               <ProjectUpdateCard 
+                  key={index}
+                  update={item.content}
+                  title={index === 0 ? "Первоначальный план" : `Отчет #${index}`}
+               />
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="mb-8 bg-secondary/30">
-          <CardHeader>
-            <CardTitle>Ускорить Разработку</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Наши гении требуют больше ресурсов! Ваш вклад ускорит создание шедевра.</p>
-            <div className="flex gap-4">
-              <Input 
-                type="number" 
-                placeholder="Сумма в $" 
-                value={amount} 
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={isLoading}
-              />
-              <Button onClick={handleSendMoney} disabled={isLoading}>
-                {isLoading ? 'Отправка...' : 'Сделать взнос'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Правая колонка - Управление */}
+        <div className="space-y-6">
+          <Card className="sticky top-8 bg-secondary/30">
+            <CardHeader>
+              <CardTitle>Панель инвестора</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h4 className="font-bold mb-2">Ускорить разработку</h4>
+                <p className="text-sm text-foreground/70 mb-4">Ваш вклад ускорит создание шедевра.</p>
+                <div className="flex gap-2">
+                  <Input 
+                    type="number" 
+                    placeholder="Сумма в $" 
+                    value={amount} 
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={isLoading}
+                    className="bg-background/50"
+                  />
+                  <Button onClick={handleSendMoney} disabled={isLoading}>
+                    {isLoading ? '...' : 'Взнос'}
+                  </Button>
+                </div>
+              </div>
+              <Separator />
+              <div>
+                <h4 className="font-bold mb-2">Связаться с командой</h4>
+                <div className="flex flex-col space-y-2">
+                  <Button variant="outline" onClick={() => openChat('bogdan')}>Чат с Богданом (CEO)</Button>
+                  <Button variant="outline" onClick={() => openChat('olya')}>Чат с Олей (Арт-директор)</Button>
+                  <Button variant="outline" onClick={() => openChat('felix')}>Чат с Феликсом (Разработчик)</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Связаться с Командой</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" onClick={() => openChat('bogdan')}>Чат с Богданом (CEO)</Button>
-            <Button variant="outline" onClick={() => openChat('olya')}>Чат с Олей (Арт-директор)</Button>
-            <Button variant="outline" onClick={() => openChat('felix')}>Чат с Феликсом (Разработчик)</Button>
-          </CardContent>
-        </Card>
       </div>
 
       {isChatOpen && activeChat && (
@@ -134,3 +139,4 @@ const GamePlanPage = () => {
 };
 
 export default GamePlanPage;
+

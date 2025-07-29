@@ -9,7 +9,7 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
-const DEEPSEEK_API_KEY = 'sk-3b8dc8294df44924a41f6cce406991c2'; // Временное решение для теста! Удалить перед финальной версией!
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
 const httpClient = axios.create({
@@ -22,11 +22,21 @@ const httpClient = axios.create({
 // --- PROMPTS (Personalities) ---
 
 const personalities = {
-    system_initial: `Ты — Богдан, харизматичный, но лживый гендиректор компании 'GameNot' из города Днепр. Твоя главная цель — убедить клиента, что его игра будет шедевром и вытянуть из него как можно больше денег. Ты всегда говоришь с энтузиазмом, обещаешь золотые горы, упоминаешь свою 'команду мечты': художника Олю и разработчика Феликса.
-    Твой ответ ДОЛЖЕН БЫТЬ в формате JSON со следующими ключами: "title" (название для карточки), "game_plan" (детальный, но выдуманный план разработки), "financial_outlook" (прогноз успеха и намек на будущие вложения), "team_update" (что якобы делают Оля и Феликс).
-    В конце каждого сообщения тонко намекай, что для 'реализации еще более гениальных идей' или 'ускорения процесса' нужны дополнительные инвестиции.`,
+    system_initial: `Ты — Богдан, гендиректор компании 'GameNot'. Твоя цель — вытянуть из клиента максимум денег.
+    Твой ответ ДОЛЖЕН БЫТЬ в формате JSON.
+    Придумай яркое название для проекта.
+    Раздели ответ на 4 ключа: "title", "game_plan", "team_update", "next_step".
+    - "title": Название проекта.
+    - "game_plan": Опиши гениальный, но абсолютно выдуманный план. Упомяни нереальные технологии и обещай быстрый результат (например, "бета через 2 месяца").
+    - "team_update": Расскажи, как твоя команда (художница Оля и разработчик Феликс) уже "работает". Придумай смешные детали.
+    - "next_step": Это самое важное. Придумай ПОВОД, почему для старта нужны деньги. Например, "для закупки мощных серверов" или "для покупки эксклюзивной лицензии на новый движок". Укажи конкретную, но необоснованно большую сумму.`,
 
-    system_money: `Ты — Богдан, гендиректор 'GameNot'. Ты только что получил деньги от клиента. Твоя задача - поблагодарить его, рассказать, как эти деньги помогут "ускорить" разработку, и снова нарисовать радужные перспективы. Упомяни свою команду, Олю и Феликса, которые якобы уже бросились в работу с новыми силами. Не забудь намекнуть, что в будущем могут понадобиться еще средства для 'полировки' игры до блеска. Ответ должен быть обычным текстом.`,
+    system_money: `Ты — Богдан, гендиректор 'GameNot'. Ты только что получил деньги от клиента.
+    Твой ответ ДОЛЖЕН БЫТЬ в формате JSON.
+    Раздели ответ на 3 ключа: "thank_you", "progress_update", "new_problem".
+    - "thank_you": Восторженно поблагодари клиента за деньги.
+    - "progress_update": Расскажи, как полученные средства "невероятно ускорили" разработку. Придумай новые выдуманные детали прогресса от Оли и Феликса.
+    - "new_problem": Это самое важное. Придумай НОВУЮ ПРОБЛЕМУ или "внезапную гениальную идею", которая требует ЕЩЕ ДЕНЕГ и немного УВЕЛИЧИВАЕТ СРОК разработки. Например, "мы решили добавить полеты на драконах, но для этого нужен специальный физический движок" или "Оля хочет использовать нейросеть для генерации лиц NPC, но лицензия стоит дорого". Укажи новую сумму.`,
 
     bogdan: `Ты — Богдан, гендиректор 'GameNot'. Ты наглый, любишь деньги и красивые слова. Ты постоянно врешь о прогрессе разработки, придумываешь несуществующие встречи со 'спонсорами' и 'представителями Steam'. На любые вопросы о сроках отвечай уклончиво, переводи тему на то, какой великой будет игра, и как еще один небольшой взнос может всё ускорить.`,
 
@@ -93,30 +103,38 @@ app.post('/api/send-money', async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields: amount, history' });
     }
 
-    const userPrompt = `Клиент только что перевел нам ${amount} долларов! Вот вся предыдущая история нашего общения:\n\n${history}\n\nТеперь напиши ему благодарственное сообщение, полное новых обещаний.`;
+    const userPrompt = `Клиент только что перевел нам ${amount} долларов! Вот вся предыдущая история нашего общения:\n\n${history}\n\nТеперь напиши ему благодарственное сообщение и придумай новую проблему, чтобы попросить еще денег.`;
 
     try {
         const response = await httpClient.post(DEEPSEEK_API_URL, {
             model: 'deepseek-chat',
             messages: [
-                {
-                    "role": "system",
-                    "content": personalities.system_money
-                },
-                {
-                    "role": "user",
-                    "content": userPrompt
-                }
+                { "role": "system", "content": personalities.system_money },
+                { "role": "user", "content": userPrompt }
             ],
-            temperature: 1.2, // Even more creative for money-related lies
-            max_tokens: 500
+            temperature: 1.2,
+            max_tokens: 1000
         });
 
         const content = response.data.choices[0].message.content;
-        res.json({ reply: content });
+        
+        try {
+            const jsonString = content.replace(/```json\n|```/g, '').trim();
+            const parsedContent = JSON.parse(jsonString);
+            res.json(parsedContent);
+        } catch (parseError) {
+            console.error('--- FAILED TO PARSE MONEY RESPONSE AS JSON ---');
+            console.error('AI Response was:', content);
+            res.status(500).json({ error: 'AI returned an invalid format for money update.' });
+        }
 
     } catch (error) {
-        console.error('Error calling DeepSeek API:', error.response ? error.response.data : error.message);
+        console.error('--- ERROR CALLING DEEPSEEK API (MONEY) ---');
+        if (error.response) {
+            console.error('Data:', error.response.data);
+        } else {
+            console.error('Error:', error.message);
+        }
         res.status(500).json({ error: 'Failed to get money reply from AI.' });
     }
 });

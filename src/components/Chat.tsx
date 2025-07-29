@@ -17,9 +17,10 @@ const Chat = ({ person, closeChat }: ChatProps) => {
   const { 
     bogdanChat, olyaChat, felixChat, 
     addMessageToBogdanChat, addMessageToOlyaChat, addMessageToFelixChat,
-    isLoading, setLoading, setError 
+    setError 
   } = useGame();
   
+  const [isChatLoading, setChatLoading] = useState(false);
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +45,7 @@ const Chat = ({ person, closeChat }: ChatProps) => {
     const userMessage: IMessage = { role: 'user', content: input };
     addMessage(userMessage);
     setInput('');
-    setLoading(true);
+    setChatLoading(true);
     setError(null);
 
     try {
@@ -63,7 +64,7 @@ const Chat = ({ person, closeChat }: ChatProps) => {
       setError(error.message);
       addMessage({ role: 'assistant', content: `[Системная ошибка: ${error.message}]` });
     } finally {
-      setLoading(false);
+      setChatLoading(false);
     }
   };
 
@@ -86,7 +87,13 @@ const Chat = ({ person, closeChat }: ChatProps) => {
                   </div>
                 </div>
               ))}
-               {isLoading && <div className="text-center text-muted-foreground">Печатает...</div>}
+               {isChatLoading && (
+                <div className="flex justify-start">
+                    <div className="p-3 rounded-lg bg-secondary">
+                        Печатает...
+                    </div>
+                </div>
+               )}
             </div>
           </ScrollArea>
         </CardContent>
@@ -97,9 +104,9 @@ const Chat = ({ person, closeChat }: ChatProps) => {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Ваше сообщение..."
-              disabled={isLoading}
+              disabled={isChatLoading}
             />
-            <Button onClick={handleSend} disabled={isLoading}>
+            <Button onClick={handleSend} disabled={isChatLoading}>
               Отправить
             </Button>
           </div>
